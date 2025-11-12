@@ -42,3 +42,4 @@ app-example
 /android
 
 supabase-schema.sql
+.vscode/
