@@ -12,7 +12,7 @@
 
 ```bash
 # 1. Navigate to project
-cd petlink-lofi
+cd petLink
 
 # 2. Install dependencies
 npm install
