@@ -1,22 +1,24 @@
-import React, { useState, useEffect, useRef } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
+  Animated,
+  SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
-  View,
   TextInput,
   TouchableOpacity,
-  ScrollView,
-  SafeAreaView,
-  Animated,
-  Alert,
-  ActivityIndicator,
+  View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './lib/supabase';
-import WelcomeScreen from './screens/WelcomeScreen';
+import ChatScreen from './screens/ChatScreen';
 import DashboardScreen from './screens/DashboardScreen';
+import EditProfileScreen from './screens/EditProfileScreen';
 import MessagesScreen from './screens/MessagesScreen';
+import WelcomeScreen from './screens/WelcomeScreen';
 
 interface User {
   id: string;
@@ -24,6 +26,9 @@ interface User {
   full_name: string | null;
   user_type: 'owner' | 'caregiver' | null;
   verified: boolean;
+  bio?: string | null;
+  phone?: string | null;
+  zip_code?: string | null;
 }
 
 interface Message {
@@ -44,6 +49,7 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [allCaregivers, setAllCaregivers] = useState<any[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   
   // Auth states
   const [email, setEmail] = useState('');
@@ -338,11 +344,9 @@ export default function App() {
     setMessages(updated);
     saveMessages(updated);
     
-    Alert.alert(
-      message.caregiverName,
-      'Chat feature coming soon! For now, you can see who you matched with.',
-      [{ text: 'OK' }]
-    );
+    // Navigate to chat screen
+    setSelectedMessage(message);
+    setCurrentScreen('chat');
   };
 
   // Welcome Screen
@@ -548,6 +552,18 @@ export default function App() {
     );
   }
 
+  // Chat Screen
+  if (currentScreen === 'chat' && selectedMessage && user) {
+    return (
+      <ChatScreen
+        userId={user.id}
+        caregiverId={selectedMessage.caregiverId}
+        caregiverName={selectedMessage.caregiverName}
+        onBack={() => setCurrentScreen('messages')}
+      />
+    );
+  }
+
   // Profile Screen
   if (currentScreen === 'profile') {
     return (
@@ -570,7 +586,16 @@ export default function App() {
                 {user?.verified && <Text style={styles.verifiedBadge}>✓ Verified</Text>}
               </View>
 
-              <TouchableOpacity style={[styles.primaryButton, { marginTop: 20 }]} onPress={handleSignOut}>
+              <TouchableOpacity 
+                style={[styles.primaryButton, { marginTop: 20 }]} 
+                onPress={() => setCurrentScreen('editProfile')}
+              >
+                <LinearGradient colors={['#4facfe', '#00f2fe']} style={styles.gradientButton}>
+                  <Text style={styles.buttonText}>Edit Profile</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={[styles.primaryButton, { marginTop: 10 }]} onPress={handleSignOut}>
                 <LinearGradient colors={['#FF6B6B', '#FF8E8E']} style={styles.gradientButton}>
                   <Text style={styles.buttonText}>Log Out</Text>
                 </LinearGradient>
@@ -579,6 +604,24 @@ export default function App() {
           </ScrollView>
         </SafeAreaView>
       </LinearGradient>
+    );
+  }
+
+  // Edit Profile Screen
+  if (currentScreen === 'editProfile' && user) {
+    return (
+      <EditProfileScreen
+        userId={user.id}
+        currentName={user.full_name || ''}
+        currentBio={user.bio || null}
+        currentPhone={user.phone || null}
+        currentZipCode={user.zip_code || null}
+        onBack={() => setCurrentScreen('profile')}
+        onSave={async () => {
+          await loadUserProfile(user.id);
+          setCurrentScreen('profile');
+        }}
+      />
     );
   }
 
