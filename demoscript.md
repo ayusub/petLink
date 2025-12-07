@@ -1,8 +1,5 @@
 # PetLink - Final Demo Script
 ## EECS 497 Major Design Projects
-**Team Members:** Ansi  
-**Total Length:** ~12-15 minutes  
-**Date:** December 2025
 
 ---
 
